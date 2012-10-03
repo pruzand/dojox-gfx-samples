@@ -31,6 +31,10 @@
 		ready(function(){
 			gfx.createSurface("canvas", 600,300).whenLoaded(this, function(surface){
 				var symbol = surface.createGroup();
+				var bg = surface.createRect({x:0, y:0, width:230, height:110, r:6})
+						.setFill("#F5F5DC")
+						.setStroke({color:"#EED5B7", width:3});
+				symbol.add(bg);
 			});
 		});
 	});
