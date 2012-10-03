@@ -43,10 +43,49 @@
 			return symbol;
 		}
 
+		function transformToContainer(shape, /*dojox/gfx/Group*/container){
+			// summary:
+			//		Gets the transform from the shape coordinate system (i.e
+			//)		taking into account the shape transform)
+			//		to the specified container coordinate system.
+			// container: dojox/gfx/Group:
+			//	the target container.
+			
+			if(!container){
+				return null;
+			}
+			if(container === shape){
+				return matrix.identity;
+			}
+			var t1 = shape._getRealMatrix() || matrix.identity;
+			var t2 = container._getRealMatrix() || matrix.identity;
+			return matrix.multiply(matrix.invert(t2), t1);
+		}
+
 		ready(function(){
 			gfx.createSurface("canvas", 600,300).whenLoaded(this, function(surface){
 				var symbol = createSymbol(surface);
-				new Moveable(symbol);
+				var link = surface.createGroup().setTransform(matrix.translate(300,200));
+				link.createCircle({r:10}).setFill("black");
+				var line = link.createLine().setStroke({width:2,color:"black"});
+				var facePt = {x:37,y:33};
+				var computeLineEnd = function(){
+					var t = transformToContainer(symbol.img, link);
+					var pt = matrix.multiplyPoint(t, facePt);
+					line.setShape({x2:pt.x, y2:pt.y});
+				};
+				var angle = 0;
+				new Moveable(symbol).onMoved = function(){
+					// rotate the image to illustrate the transform chain
+					angle +=10;
+					symbol.img.setTransform(matrix.rotategAt(angle,37,53));
+					// now computes the new position
+					computeLineEnd();
+				};
+				// make the link moveable too
+				new Moveable(link).onMoved = computeLineEnd;
+				// refresh position
+				computeLineEnd();
 			});
 		});
 	});
