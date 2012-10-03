@@ -86,8 +86,16 @@
 				new Moveable(link).onMoved = computeLineEnd;
 				// refresh position
 				computeLineEnd();
+				var ghost;
 				symbol.connect("onclick", function(e){
-					symbol.children[0].setFill("blue");
+					var s = e.gfxTarget,
+						// Text have no bbox. In this case, get the background shape bbox
+						bbox = s.getBoundingBox() || symbol.children[0].getBoundingBox();
+					bbox = matrix.multiplyRectangle(s.getTransform() || matrix.identity, bbox);
+					if(!ghost){
+						ghost = symbol.createRect().setStroke({width:2,style:"Dash",color:"black"});
+					}
+					ghost.setShape(bbox);
 				});
 				
 			});
