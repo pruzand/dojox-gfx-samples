@@ -86,6 +86,10 @@
 				new Moveable(link).onMoved = computeLineEnd;
 				// refresh position
 				computeLineEnd();
+				symbol.connect("onclick", function(e){
+					symbol.children[0].setFill("blue");
+				});
+				
 			});
 		});
 	});
