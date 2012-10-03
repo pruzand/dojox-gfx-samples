@@ -28,13 +28,22 @@
 		"dojox/gfx"],
 		function(ready, gfx){
 
+		function createSymbol(parent){
+			var symbol = parent.createGroup();
+			symbol.createRect({x:0, y:0, width:230, height:110, r:6})
+					.setFill("#F5F5DC")
+					.setStroke({color:"#EED5B7", width:3});
+			symbol.img = symbol.createImage({x:8, y:8, width:55, height:60, src:'male.png'});
+			symbol.createText({x:67, y:25, text:"John Smith"}).setFill("black").setFont({family:'sans-serif', size:'13pt'});
+			symbol.createText({x:67, y:45, text:"Software Engineer"}).setFill("black").setFont({family:'sans-serif', size:'10pt'});
+			symbol.createText({x:67, y:65, text:"Phone: 6060-842"}).setFill("black").setFont({family:'sans-serif', size:'08pt'});
+			symbol.createText({x:67, y:80, text:"Email: jsmith@mycompany.com"}).setFill("black").setFont({family:'sans-serif', size:'08pt'});
+			return symbol;
+		}
+
 		ready(function(){
 			gfx.createSurface("canvas", 600,300).whenLoaded(this, function(surface){
-				var symbol = surface.createGroup();
-				var bg = surface.createRect({x:0, y:0, width:230, height:110, r:6})
-						.setFill("#F5F5DC")
-						.setStroke({color:"#EED5B7", width:3});
-				symbol.add(bg);
+				var symbol = createSymbol(surface);
 			});
 		});
 	});
