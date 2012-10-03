@@ -1,0 +1,42 @@
+<!--[if IE 7]>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en">
+	<head>
+<![endif]-->
+<!--[if IE 8]>
+<!DOCTYPE>
+<html lang="en">
+	<head>
+		<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7"/>
+<![endif]-->
+<![if gte IE 9]>
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+<![endif]>
+		<meta charset="utf-8" />
+		<title>Dojox.Gfx Receipe #1</title>
+	<script type="text/javascript">
+		var dojoConfig = {
+			async:1
+		}
+	</script>
+	<script type="text/javascript" src="./dojo/dojo.js"></script>
+	<script type="text/javascript">
+	require([
+		"dojo/ready",
+		"dojox/gfx"],
+		function(ready, gfx){
+
+		ready(function(){
+			gfx.createSurface("canvas", 600,300).whenLoaded(this, function(surface){
+				var symbol = surface.createGroup();
+			});
+		});
+	});
+	</script>
+	</head>
+	<body>
+		<div id="canvas" style="width:600px;height:300px;border-color:black;border-width:2;border-style: solid"></div>
+	</body>
+</html>
