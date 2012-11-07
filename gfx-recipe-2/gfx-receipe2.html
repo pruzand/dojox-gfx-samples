@@ -1,0 +1,120 @@
+<!--[if IE 7]>
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en">
+	<head>
+<![endif]-->
+<!--[if IE 8]>
+<!DOCTYPE>
+<html lang="en">
+	<head>
+		<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE7"/>
+<![endif]-->
+<![if gte IE 9]>
+<!DOCTYPE HTML>
+<html lang="en">
+	<head>
+<![endif]>
+		<meta charset="utf-8" />
+		<title>Dojox.Gfx Receipe #1</title>
+	<script type="text/javascript">
+		var dojoConfig = {
+			async:1,
+			isDebug:true
+		}
+	</script>
+	<script type="text/javascript" src="./dojo/dojo.js"></script>
+	<script type="text/javascript">
+	require([
+		"dojo/ready",
+		"dojo/aspect",
+		"dojo/dom",
+		"dojo/on",
+		"dojo/_base/declare",
+		"dojo/Stateful",
+		"dojox/gfx",
+		"dojox/gfx/matrix",
+		"dojox/gfx/Moveable"],
+		function(ready, aspect, dom, on, declare, Stateful, gfx, matrix, Moveable){
+
+		// Symbol class definition
+		var Symbol = declare([gfx.Group],{
+			constructor:function(){
+			},
+			build:function(data){
+				this.createRect({x:0, y:0, width:230, height:110, r:6})
+						.setFill("#F5F5DC")
+						.setStroke({color:"#EED5B7", width:3});
+				this.img = this.createImage({x:8, y:8, width:55, height:60, src:'male.png'});
+				this._gfxName = this.createText({x:67, y:25, text:"John Smith"}).setFill("black").setFont({family:'sans-serif', size:'13pt'});
+				this._gfxJob = this.createText({x:67, y:45, text:"Software Engineer"}).setFill("black").setFont({family:'sans-serif', size:'10pt'});
+				this._gfxPhone = this.createText({x:67, y:65, text:"Phone: 6060-842"}).setFill("black").setFont({family:'sans-serif', size:'08pt'});
+				this._gfxEmail = this.createText({x:67, y:80, text:"Email: jsmith@mycompany.com"}).setFill("black").setFont({family:'sans-serif', size:'08pt'});
+				return this;
+			}
+		});
+		Symbol.nodeType = gfx.Group.nodeType;
+		Symbol.Creator = {
+			createSymbol: function(kwArgs){
+				return this.createObject(Symbol).build(kwArgs);
+			}
+		};
+		gfx.Surface.extend(Symbol.Creator);
+		gfx.Group.extend(Symbol.Creator);
+
+		(function(){
+			if(gfx.renderer == "vml"){
+				var fixVMLCreateObject = function(shape) {
+					if(shape instanceof Symbol){
+						// Call Creator._overrideSize
+						var node = shape.rawNode;
+						this._overrideSize(node);
+
+						// Need to do vml-specific createGroup tasks
+						// see dojox.gfx.vml.js/createGroup()
+						var r = shape.rawNode.ownerDocument.createElement("v:rect");
+						r.style.left = r.style.top = 0;
+						r.style.width = shape.rawNode.style.width;
+						r.style.height = shape.rawNode.style.height;
+						r.filled = r.stroked = "f";
+						shape.rawNode.appendChild(r);
+						shape.bgNode = r;
+					}
+					return shape;
+				};
+				aspect.after(gfx.Surface.prototype, 'createObject', fixVMLCreateObject);
+				aspect.after(gfx.Group.prototype, 'createObject', fixVMLCreateObject);
+			}
+		})();
+
+		function transformToContainer(shape, /*dojox/gfx/Group*/container){
+			// summary:
+			//		Gets the transform from the shape coordinate system (i.e
+			//)		taking into account the shape transform)
+			//		to the specified container coordinate system.
+			// container: dojox/gfx/Group:
+			//	the target container.
+			
+			if(!container){
+				return null;
+			}
+			if(container === shape){
+				return matrix.identity;
+			}
+			var t1 = shape._getRealMatrix() || matrix.identity;
+			var t2 = container._getRealMatrix() || matrix.identity;
+			return matrix.multiply(matrix.invert(t2), t1);
+		}
+		
+		ready(function(){
+			gfx.createSurface("canvas", 600,300).whenLoaded(this, function(surface){
+				var symbol = surface.createSymbol();
+			});
+		});
+	});
+	</script>
+	</head>
+	<body>
+		<div id="canvas" style="width:600px;height:300px;border-color:black;border-width:2;border-style: solid"></div>
+		<button id="b1">New name</button>
+	</body>
+</html>
