@@ -26,6 +26,8 @@
 	<script type="text/javascript">
 	require([
 		"dojo/ready",
+		"dojo/_base/lang",
+		"dojo/_base/array",
 		"dojo/aspect",
 		"dojo/dom",
 		"dojo/on",
@@ -33,23 +35,53 @@
 		"dojo/Stateful",
 		"dojox/gfx",
 		"dojox/gfx/matrix",
-		"dojox/gfx/Moveable"],
-		function(ready, aspect, dom, on, declare, Stateful, gfx, matrix, Moveable){
+		"dojox/gfx/Moveable",
+		"dojox/mvc/sync"],
+		function(ready, lang, array, aspect, dom, on, declare, Stateful, gfx, matrix, Moveable, sync){
 
 		// Symbol class definition
-		var Symbol = declare([gfx.Group],{
+		var Symbol = declare([gfx.Group, Stateful],{
 			constructor:function(){
 			},
-			build:function(data){
+			build:function(){
 				this.createRect({x:0, y:0, width:230, height:110, r:6})
 						.setFill("#F5F5DC")
 						.setStroke({color:"#EED5B7", width:3});
 				this.img = this.createImage({x:8, y:8, width:55, height:60, src:'male.png'});
-				this._gfxName = this.createText({x:67, y:25, text:"John Smith"}).setFill("black").setFont({family:'sans-serif', size:'13pt'});
-				this._gfxJob = this.createText({x:67, y:45, text:"Software Engineer"}).setFill("black").setFont({family:'sans-serif', size:'10pt'});
-				this._gfxPhone = this.createText({x:67, y:65, text:"Phone: 6060-842"}).setFill("black").setFont({family:'sans-serif', size:'08pt'});
-				this._gfxEmail = this.createText({x:67, y:80, text:"Email: jsmith@mycompany.com"}).setFill("black").setFont({family:'sans-serif', size:'08pt'});
+				this._gfxName = this.createText({x:67, y:25, text:this._name}).setFill("black").setFont({family:'sans-serif', size:'13pt'});
+				this._gfxJob = this.createText({x:67, y:45, text:this._jobRole}).setFill("black").setFont({family:'sans-serif', size:'10pt'});
+				this._gfxPhone = this.createText({x:67, y:65, text:"Phone: " + this._phone}).setFill("black").setFont({family:'sans-serif', size:'08pt'});
+				this._gfxEmail = this.createText({x:67, y:80, text:"Email: " + this._email}).setFill("black").setFont({family:'sans-serif', size:'08pt'});
 				return this;
+			},
+			_name:"",
+			_nameSetter: function(v){
+				this._name = v;
+				if(this._gfxName)
+					this._gfxName.setShape({text:this._name});
+			},
+			_phone:"",
+			_phoneSetter: function(v){
+				this._phone = v;
+				if(this._gfxPhone)
+					this._gfxPhone.setShape({text:"Phone: " + this._phone});
+			},
+			_email:"",
+			_emailSetter: function(v){
+				this._email= v;
+				if(this._gfxEmail)
+					this._gfxEmail.setShape({text:"Email: " + this._email});
+			},
+			_jobRole:"",
+			_jobRoleSetter: function(v){
+				this._jobRole = v;
+				if(this._gfxJob)
+					this._gfxJob.setShape({text:this._jobRole});
+			},
+			sync: function(data, bindings){
+				array.forEach(bindings, lang.hitch(this, function(b){
+					sync(data, b.from, this, b.to, b.opt);
+				}));
 			}
 		});
 		Symbol.nodeType = gfx.Group.nodeType;
@@ -107,7 +139,55 @@
 		
 		ready(function(){
 			gfx.createSurface("canvas", 600,300).whenLoaded(this, function(surface){
+
+				var employee = new Stateful({
+					firstName: "John",
+					lastName: "Smith",
+					jobTitle: "Software Engineer",
+					phone: "6060-842",
+					email: "jsmith@mycompany.com"
+				});
+
 				var symbol = surface.createSymbol();
+
+				var nameConverter = {
+					format: function(value){
+						return employee.firstName + " " + employee.lastName;
+					}
+				};
+				symbol.sync(employee, [{
+					from: "jobTitle",
+					to  : "jobRole",
+					opt : {bindDirection: sync.from}
+				}, {
+					from: "phone",
+					to  : "phone",
+					opt : {bindDirection: sync.from}
+				},{
+					from: "email",
+					to  : "email",
+					opt : {bindDirection: sync.from}
+				},{
+					from: "firstName",
+					to : "name",
+					opt: {
+						bindDirection: sync.from,
+						converter: nameConverter
+					}
+				},{
+					from: "lastName",
+					to : "name",
+					opt: {
+						bindDirection: sync.from,
+						converter: nameConverter
+					}
+				}
+				]);
+
+				on(dom.byId("b1"), "click", function(){
+					employee.set("lastName", "Doe");
+				});
+
 			});
 		});
 	});
