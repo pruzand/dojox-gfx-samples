@@ -33,25 +33,53 @@
 		"dojo/on",
 		"dojo/_base/declare",
 		"dojo/Stateful",
+		"dojo/string",
+		"dojo/json",
 		"dojox/gfx",
 		"dojox/gfx/matrix",
 		"dojox/gfx/Moveable",
 		"dojox/mvc/sync"],
-		function(ready, lang, array, aspect, dom, on, declare, Stateful, gfx, matrix, Moveable, sync){
+		function(ready, lang, array, aspect, dom, on, declare, Stateful, dstring, jsonLib, gfx, matrix, Moveable, sync){
 
-		// Symbol class definition
+
+
+			// Symbol class definition
 		var Symbol = declare([gfx.Group, Stateful],{
 			constructor:function(){
+				this.moreInfo=null;
 			},
-			build:function(){
-				this.createRect({x:0, y:0, width:230, height:110, r:6})
-						.setFill("#F5F5DC")
-						.setStroke({color:"#EED5B7", width:3});
-				this.img = this.createImage({x:8, y:8, width:55, height:60, src:'male.png'});
-				this._gfxName = this.createText({x:67, y:25, text:this._name}).setFill("black").setFont({family:'sans-serif', size:'13pt'});
-				this._gfxJob = this.createText({x:67, y:45, text:this._jobRole}).setFill("black").setFont({family:'sans-serif', size:'10pt'});
-				this._gfxPhone = this.createText({x:67, y:65, text:"Phone: " + this._phone}).setFill("black").setFont({family:'sans-serif', size:'08pt'});
-				this._gfxEmail = this.createText({x:67, y:80, text:"Email: " + this._email}).setFill("black").setFont({family:'sans-serif', size:'08pt'});
+			build:function(template){
+				var asObj = jsonLib.parse(template);
+				var root = this;
+				var deserialize = function(parent, object){
+					if(object instanceof Array){
+						return array.map(object, lang.hitch(null, deserialize, parent));
+					}
+					var shape = ("shape" in object) ? parent.createShape(object.shape) : parent.createGroup();
+					if("transform" in object){
+						shape.setTransform(object.transform);
+					}
+					if("stroke" in object){
+						shape.setStroke(object.stroke);
+					}
+					if("fill" in object){
+						shape.setFill(object.fill);
+					}
+					if("font" in object){
+						shape.setFont(object.font);
+					}
+					if("children" in object){
+						array.forEach(object.children, lang.hitch(null, deserialize, shape));
+					}
+					if("attachPoint" in object){
+						root[object["attachPoint"]] = shape;
+					}
+					return shape;
+				};
+				deserialize(this, asObj);
+				if(this.moreInfo){
+					this.moreInfo.connect("onclick", function(){window.open("http://www.dojotoolkit.org");});
+				}
 				return this;
 			},
 			_name:"",
@@ -147,15 +175,12 @@
 					phone: "6060-842",
 					email: "jsmith@mycompany.com"
 				});
-
-				var symbol = surface.createSymbol();
-
 				var nameConverter = {
 					format: function(value){
 						return employee.firstName + " " + employee.lastName;
 					}
 				};
-				symbol.sync(employee, [{
+				var bindings = [{
 					from: "jobTitle",
 					to  : "jobRole",
 					opt : {bindDirection: sync.from}
@@ -182,7 +207,71 @@
 						converter: nameConverter
 					}
 				}
-				]);
+				];
+
+				var template = '[' +
+						'{ "shape":{"type":"rect", "width":230, "height":110, "r":6},' +
+						'  "fill":"#F5F5DC",' +
+						'  "stroke":{"color":"#EED5B7", "width":3}' +
+						'},' +
+						'{ "attachPoint":"moreInfo", ' +
+						'  "shape":{"type":"image","x":8,"y":8,"width":55,"height":60,"src":"male.png"}' +
+						'},' +
+						'{ "attachPoint":"_gfxName",' +
+						'  "shape":{"type":"text","x":67, "y":25, "text":""},' +
+						'  "fill":"black",' +
+						'  "font": {"family":"sans-serif", "size":"13pt"}' +
+						'},'+
+						'{ "attachPoint":"_gfxJob",' +
+						'  "shape":{"type":"text","x":67, "y":45, "text":""},' +
+						'  "fill":"black",' +
+						'  "font": {"family":"sans-serif", "size":"10pt"}' +
+						'},'+
+						'{ "attachPoint":"_gfxPhone",' +
+						'  "shape":{"type":"text","x":67, "y":65, "text":""},' +
+						'  "fill":"black",' +
+						'  "font": {"family":"sans-serif", "size":"8pt"}' +
+						'},'+
+						'{ "attachPoint":"_gfxEmail",' +
+						'  "shape":{"type":"text","x":67, "y":80, "text":""},' +
+						'  "fill":"black",' +
+						'  "font": {"family":"sans-serif", "size":"8pt"}' +
+						'}'+
+						']';
+
+				var symbol = surface.createSymbol(template);
+				symbol.sync(employee, bindings);
+				new Moveable(symbol);
+
+				var template2 = '[' +
+						'{ "shape":{"type":"ellipse", "cx":105, "cy":55, "rx":130, "ry":50},' +
+						'  "fill":"rgb(160,160,220)",' +
+						'  "stroke":{"color":"#EED5B7", "width":3}' +
+						'},' +
+						'{ "attachPoint":"_gfxName",' +
+						'  "shape":{"type":"text","x":67, "y":45, "text":""},' +
+						'  "fill":"black",' +
+						'  "font": {"family":"sans-serif", "size":"13pt"}' +
+						'},'+
+						'{ "attachPoint":"_gfxJob",' +
+						'  "shape":{"type":"text","x":60, "y":65, "text":""},' +
+						'  "fill":"black",' +
+						'  "font": {"family":"sans-serif", "size":"10pt"}' +
+						'},'+
+						'{ "shape":{"type":"rect", "x":75, "y":72, "width":60, "height":20},' +
+						'  "fill":"white",' +
+						'  "stroke":{"color":"black", "width":1}' +
+						'},' +
+						'{ "attachPoint":"moreInfo",' +
+						'  "shape":{"type":"text","x":82, "y":85, "text":"About me"},' +
+						'  "fill":"black",' +
+						'  "font": {"family":"sans-serif", "size":"8pt" }' +
+						'}'+
+						']';
+
+				symbol = surface.createSymbol(template2).setTransform(matrix.translate(300,0));
+				symbol.sync(employee, bindings);
+				new Moveable(symbol);
 
 				on(dom.byId("b1"), "click", function(){
 					employee.set("lastName", "Doe");
